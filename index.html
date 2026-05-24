@@ -45,39 +45,96 @@ canvas {
 .container img:hover {
   opacity:0;
 }
+
+#close {
+    float:right;
+    display:inline-block;
+    padding:2px 5px;
+    background:#ccc;
+}
     </style>
 </head>
-<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 
 
 
 <body>
-<div>
-<center>
-<div class="container">
-<canvas id="canvas" width="100" height="100" onclick="pixelateNext()"></canvas></div>
-<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
-<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
-<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
-<button onclick="URLGO()">GO</button><br>
-<h1>Needs More Pixels</h1>
-<p style="white-space: pre-line">
-(The game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)
-Click image to step to the next clearer image.
-Arrow keys also work: up to start, down to end, left/right step one by one.
-Select a local image, or paste a URL to play new game.
 
-Known weird issue - the pixel colors for earlier steps change after you visit later steps. WHAT.
-</p>
-</center>
+<div id = "tutorial" style="display: none;">
+	<span id='close' onclick='killTutorial()'>x</span>
+	<center>Welcome to Needs More Pixels.<br>Scroll down for more info.</center>
+</div>
+<div>
+
+	<div class="container">
+		<canvas id="canvas" width="100" height="100" onclick="pixelateNext()"></canvas>
+	</div>
+	<div style="width:800px; margin:0 auto;">
+	<center>
+		<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
+		<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
+		<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
+		<button onclick="URLGO()">GO</button><br>
+		<button onclick="restart()">Restart</button><br>
+		<h1>Needs More Pixels</h1>
+		<div>(The party game from <a href="https://www.youtube.com/channel/UCVQa3eDp9rFpKw3LZ3AsMCg">Um, Actually</a>)</div>
+		<div>(Web App by <a href="https://tdsgames.com">Alex TD</a>)</div>
+	</center>
+	</div>
+	<div style="width:640px; margin:10 auto;">
+		<p style="white-space: pre-line"><b>How To Play</b>
+		This is an image you (hopefully) know, but it has been pixelated beyond recognizability.
+		You'll get to see clearer and clearer images -
+		If you think you can identify it, be the first take your guess! But you only get one guess.
+		If all players pass, increase the clarity level.
+		
+		<b>How To UI</b>
+		Simply click the image to step to the next clearer image.
+		
+		Arrow keys also work: up to start, down to end, left/right step one by one.
+		Also you can use the slider bar beneath image to select image clarity.
+		The Restart button sets max pixelization and recenters the image.
+		
+		For the next game, click "Choose File" to select a local image, or paste an image URL and GO to play a new game.
+		
+		
+		<b>Tips to play with your phone at your TV</b>
+		1. Share the URL with everyone
+		2. Save this page to your home screen (to run without browser UI getting in the way)
+		3. Keep your phone horizontal
+		4. Select your image and start the game
+		5. Display your phone's screen on your TV for everyone to see (that's something technology can do, right?)
+		6. Hopefully someone else will put up an image so you can play and not host images all the time
+		
+		
+	Known issues:
+	Sometimes the image scales badly. Rather than fix that, there is a Restart button to re-align the image. (this'll happen when run from the home screen, after rotating the phone)
+		</p>
+		<button onclick="reset()">RESET WELCOME BANNER</button><br>
+	</div>
 </div>
 <script>
+if(document.cookie == "")
+	document.getElementById("tutorial").style = "";
+
 var url = document.getElementById("urlIn");
 var file = document.getElementById("fileIn");
 var slider = document.getElementById("myRange");
 var canvas = document.getElementById('canvas');
+var icanvas = document.createElement("canvas");
+
+function killTutorial()
+{
+	document.getElementById("tutorial").style = 'display: none;';
+	document.cookie = "OK=OK";
+}
+function reset()
+{
+	document.cookie = 'OK=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;'
+}
+
 
 addEventListener("load", function() {
     window.scrollTo(1, 0);
@@ -86,6 +143,7 @@ addEventListener("load", function() {
 // Chunks of this code:
 // (C) Ken Fyrstenberg, Epistemex, License: CC3.0-attr
 var ctx = canvas.getContext('2d'),
+		ictx = icanvas.getContext('2d'), d,	//image data array in d
     img = new Image();
 // wait until image is actually available
 img.onload = start;
@@ -94,16 +152,22 @@ img.onload = start;
 window.addEventListener('resize', resizeCanvas, false);
 			
 function resizeCanvas() {
-	canvas.width = window.innerWidth
-	canvas.height = window.innerHeight
+	canvas.width = window.innerWidth*window.devicePixelRatio;//Mobile scales pixels down so we scale this up so full-res image is closer to correct.
+	canvas.height = window.innerHeight*window.devicePixelRatio;
+	canvas.style.width = window.innerWidth + "px";
+	canvas.style.height = window.innerHeight + "px";
 
-	findScale();
-	pixelateCur(); 
+	if(img.complete)
+	{
+		findScale();
+		pixelateCur(); 
+	}
 }
 
 
 
 // turn off image smoothing - this will give the pixelated effect
+ctx.imageSmoothingQuality  = "high"
 function setSmooth(on)
 {
 	ctx.mozImageSmoothingEnabled = off;
@@ -111,40 +175,51 @@ function setSmooth(on)
 	ctx.imageSmoothingEnabled = off;
 }
 
+var w =1, h=1, iw=1, ih=1;
 function start()
 {
+	iw = img.width; ih = img.height;
+	img.crossOrigin = "Anonymous";//apparently you can't just read image data from other sites
+	
+	//apparently you can't get image data from img, but can from drawing onto a canvas
+	icanvas.width = iw;	icanvas.height = ih;
+	ictx.clearRect(0, 0, iw, ih);//Because maybe transparency?
+	ictx.drawImage(img, 0, 0, iw, ih);
+	d = ictx.getImageData(0,0,iw, ih).data;
+	
+	slider.value = 1;
   document.body.scrollTop = 0; // For Safari
   document.documentElement.scrollTop = 0; // For Chrome, Firefox, IE and Opera
 	
 	resizeCanvas();
-	findScale();
-	pixelateFirst();
+}
+function restart()
+{
+	killTutorial();
+	start();
 }
 //img.onerror = function() {console.log("err")}//Still spams console oh well
 //img.onabort = function() {console.log("abort")}
 
 //Figure out scaling:
-var w = canvas.width;
-var h = canvas.height;
-var scale = 1;
+var w =1, h=1, iw=1, ih=1;
+var imScale = 1;
 var dx = 0, dy = 0;
 
 function findScale()
 {
-	w = img.width;
-	h = img.height;
-	if(w/h > canvas.width/canvas.height)
-	{	//wider
-		scale = canvas.width/w;
-		h = Math.floor(h*scale);
+	if(iw/ih > canvas.width/canvas.height)
+	{	//canvas is taller 
+		imScale = canvas.width/iw;
+		h = Math.floor(ih*imScale);
 		w = canvas.width;
 		dx = 0;
 		dy = Math.floor((canvas.height-h)/2);
 	}
 	else
-	{ //taller
-		scale = canvas.height/h;
-		w = Math.floor(w*scale);
+	{ //image is taller
+		imScale = canvas.height/ih;
+		w = Math.floor(iw*imScale);
 		h = canvas.height;
 		dy = 0;
 		dx = Math.floor((canvas.width-w)/2);
@@ -152,39 +227,128 @@ function findScale()
 }
 
 
-img.src = 'http://pixel.nymag.com/imgs/daily/vulture/2016/08/11/11-obama-sex-playlist.w529.h529.jpg';
+img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Mount_Rushmore_Closeup_2017.jpg/1024px-Mount_Rushmore_Closeup_2017.jpg';
+
+//Edit the image:
+function getPixel(imgData, index) {
+  return imgData.data.slice(index*4, index*4+4) // [R,G,B,A]
+}
+
+function getPixelXY(imgData, x, y) {
+  return getPixel(imgData, y*imgData.width+x);
+}
+
+function setPixel(imgData, index, pixelData /*[R,G,B,A]*/) {
+  imgData.data.set(pixelData, index*4)
+}
+
+function setPixelXY(imgData, x, y, p/*[R,G,B,A]*/) {
+  return setPixel(imgData, y*imgData.width+x, p);
+}
+
+function averagePixel(px, py, pc)//pixel px -> px+pc
+{
+	var r=0, g=0, b=0, a=0;
+	var count = 0;
+	
+	for(var y=py ; y < py+pc*2 ; y++)
+	{
+		if(y<0 || y>=ih)
+			continue;
+		var yindex = y*iw*4;
+		for(var x=px ; x < px+pc*2 ; x++)
+		{
+			if(x<0 || x>=iw)
+				continue;
+				
+			var index = yindex+x*4;
+			
+			
+			//console.log(px, py,x, y,pixel)
+			if(d[index+3] > 0)
+			{
+				//If not transparent, add to totals
+				r += d[index];
+				g += d[index+1];
+				b += d[index+2];
+			}
+			a += d[index+3];//But do track all transparancy
+			count++;
+		}
+	}
+	
+	var acount = a/255;//Sum of transparencies, 0-1
+	return [Math.floor(r/acount), Math.floor(g/acount), Math.floor(b/acount), Math.floor(a/count)];
+}
 
 function pixelateCur()		{	pixelate(slider.value)}
-function pixelate(x) {
+function pixelate(i) {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if(x == 10)
+	if(i == 10)
 	{
 		setSmooth(true);
-		ctx.drawImage(img, dx, dy, img.width*scale, img.height*scale);
+		ctx.drawImage(img, dx, dy, iw*imScale, ih*imScale);
 		return;
 	}
+	
+	var pixelatedH = 6-i+i*i,
+	    pixelatedW = w * pixelatedH/h,
+			pixelSize = ih/pixelatedH;
+	if(h>w)
+	{
+		//taller than square
+		pixelatedW = pixelatedH//6-i+i*i
+		pixelatedH = h * pixelatedW/w
+		pixelSize = iw/pixelatedW;
+	}
+	var pixelC = Math.floor(pixelSize/2)
+			
+	//Nudge for a tiny pixel overflow
+	var nudgeX = pixelatedW%1 > 0 ? (1-(pixelatedW%1))/2 : 0
+	var nudgeY = pixelatedH%1 > 0 ? (1-(pixelatedH%1))/2 : 0
+	
+	//tiny Image 
+	//Math.ceil for tiny image to draw an extra pixel on longer axis, later will nudge to center
+	var tinyData = ctx.getImageData(0,0,Math.ceil(pixelatedW), Math.ceil(pixelatedH));
+	
+	//setPixelXY(tinyData, 2,2, [255,0,0,255]); // a red pixel
+//	for(var x=0;x<1;x++)
+//		for(var y=0;y<1;y++)
+	for(var x=0;x<Math.ceil(pixelatedW);x++)
+		for(var y=0;y<Math.ceil(pixelatedH);y++)
+		{
+			px = Math.floor(pixelSize*(x-nudgeX));
+			py = Math.floor(pixelSize*(y-nudgeY));
+			setPixelXY(tinyData, x, y, averagePixel(px, py, pixelC));
+		}
+	//setPixelXY(tinyData, 3,3, [0,255,0,255]); // a green pixel
+		
 
-	var pixelatedW = 6-x+x*x,
-	    pixelatedH = h * pixelatedW/h;
-
-	setSmooth(true);//Smoother down-sampling for more consistent image I think
-	// draw original image to the scaled size
-	ctx.drawImage(img, dx, dy, pixelatedW, pixelatedH);
-
-	setSmooth(false);//Pixelated up-scaling
+	//ctx.drawImage(icanvas, 0, 0, iw, ih, 0, 0, iw, ih);//debug see what's going on
+	ctx.putImageData(tinyData, 0,0);
+	
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
-	ctx.drawImage(canvas, dx, dy, pixelatedW, pixelatedH, dx, dy, w, h);
+	setSmooth(false);//Pixelated up-scaling
+	ctx.drawImage(canvas, nudgeX, nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
+	
+	// Clear out the working area
+	ctx.clearRect(0, 0, canvas.width, dy);
+	ctx.clearRect(0, 0, dx, canvas.height);
 }
 
 URLGO = function() {
+	killTutorial();
+	
 	img.src = urlIn.value;
 	urlIn.value = "";
 }
 
 file.onchange = function(e) { 
- var tgt = e.target || window.event.srcElement;
- var files = tgt.files;
+	killTutorial();
+	
+	var tgt = e.target || window.event.srcElement;
+	var files = tgt.files;
 
 	// FileReader support
 	if (FileReader && files && files.length) {
@@ -254,10 +418,6 @@ function pixelateFirst()	{	slider.value = 1;pixelateCur()}
 function pixelateLast()		{	slider.value = 10;pixelateCur()}
 function pixelatePrev()		{	slider.value --;pixelateCur()}
 function pixelateNext()		{	slider.value ++ ;pixelateCur()}
-
-
-
-resizeCanvas();
 </script>
 </body>
 </html>
