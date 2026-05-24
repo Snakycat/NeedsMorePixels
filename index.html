@@ -73,7 +73,7 @@ canvas {
 	</div>
 	<div style="width:800px; margin:0 auto;">
 	<center>
-		<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
+		<input type="range" min="1" max="16" value="1" class="slider" id="myRange" style="width:95%"><br>
 		<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
 		<input type="text" id="urlIn" placeholder="Image URL">
 		<button onclick="URLGO()">GO</button><br>
@@ -83,7 +83,7 @@ canvas {
 		<div>(Web App by <a href="https://tdsgames.com">Alex TD</a>)</div>
 	</center>
 	</div>
-	<div style="width:640px; margin:10 auto;">
+	<div style="width:640px; margin:16 auto;">
 		<p style="white-space: pre-line"><b>How To Play</b>
 		This is an image you (hopefully) know, but it has been pixelated beyond recognizability.
 		You'll get to see clearer and clearer images -
@@ -284,7 +284,7 @@ function averagePixel(px, py, pc)//pixel px -> px+pc
 function pixelateCur()		{	pixelate(slider.value)}
 function pixelate(i) {
 	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	if(i == 10)
+	if(i == 16)
 	{
 		setSmooth(true);
 		ctx.drawImage(img, dx, dy, iw*imScale, ih*imScale);
@@ -415,7 +415,7 @@ function checkKey(e) {
 }
 
 function pixelateFirst()	{	slider.value = 1;pixelateCur()}
-function pixelateLast()		{	slider.value = 10;pixelateCur()}
+function pixelateLast()		{	slider.value = 16;pixelateCur()}
 function pixelatePrev()		{	slider.value --;pixelateCur()}
 function pixelateNext()		{	slider.value ++ ;pixelateCur()}
 </script>
