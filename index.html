@@ -75,7 +75,7 @@ canvas {
 	<center>
 		<input type="range" min="1" max="10" value="1" class="slider" id="myRange" style="width:95%"><br>
 		<input type="file" name="media_file" id="fileIn" accept="image/*"><br>
-		<input @click="clearURL()" type="text" id="urlIn" placeholder="Image URL">
+		<input type="text" id="urlIn" placeholder="Image URL">
 		<button onclick="URLGO()">GO</button><br>
 		<button onclick="restart()">Restart</button><br>
 		<h1>Needs More Pixels</h1>
@@ -170,9 +170,9 @@ function resizeCanvas() {
 ctx.imageSmoothingQuality  = "high"
 function setSmooth(on)
 {
-	ctx.mozImageSmoothingEnabled = off;
-	ctx.webkitImageSmoothingEnabled = off ;
-	ctx.imageSmoothingEnabled = off;
+	ctx.mozImageSmoothingEnabled = on;
+	ctx.webkitImageSmoothingEnabled = on;
+	ctx.imageSmoothingEnabled = on;
 }
 
 var w =1, h=1, iw=1, ih=1;
@@ -377,7 +377,7 @@ slider.oninput = function() {
 /*
 window.addEventListener('paste', (event) => {
     console.log('paste action initiated')
-		console.log(event.originalEvent.clipboardData)
+	console.log(event.originalEvent.clipboardData)
 });
 */
 
@@ -396,19 +396,19 @@ function checkKey(e) {
     e = e || window.event;
 
     if (e.keyCode == '38') {
-			pixelateFirst(); event.preventDefault();
+		pixelateFirst(); event.preventDefault();
         // up arrow
     }
     else if (e.keyCode == '40') {
-			pixelateLast(); event.preventDefault();
+		pixelateLast(); event.preventDefault();
         // down arrow
     }
     else if (e.keyCode == '37') {
-			pixelatePrev(); event.preventDefault();
+		pixelatePrev(); event.preventDefault();
        // left arrow
     }
     else if (e.keyCode == '39') {
-			pixelateNext(); event.preventDefault();
+		pixelateNext(); event.preventDefault();
        // right arrow
     }
 
