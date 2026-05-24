@@ -24,6 +24,9 @@ canvas {
     -ms-interpolation-mode: nearest-neighbor;
 }
 
+var tempCanvas = document.createElement("canvas");
+var tempCtx = tempCanvas.getContext("2d");
+		
 .container
 {
   background: #000;
@@ -170,9 +173,9 @@ function resizeCanvas() {
 ctx.imageSmoothingQuality  = "high"
 function setSmooth(on)
 {
-	ctx.mozImageSmoothingEnabled = off;
-	ctx.webkitImageSmoothingEnabled = off ;
-	ctx.imageSmoothingEnabled = off;
+	ctx.mozImageSmoothingEnabled = on;
+	ctx.webkitImageSmoothingEnabled = on ;
+	ctx.imageSmoothingEnabled = on;
 }
 
 var w =1, h=1, iw=1, ih=1;
@@ -325,12 +328,25 @@ function pixelate(i) {
 		
 
 	//ctx.drawImage(icanvas, 0, 0, iw, ih, 0, 0, iw, ih);//debug see what's going on
-	ctx.putImageData(tinyData, 0,0);
+	tempCanvas.width = Math.ceil(pixelatedW);
+	tempCanvas.height = Math.ceil(pixelatedH);
+
+	tempCtx.putImageData(tinyData, 0, 0);
 	
 	// then draw that scaled image thumb back to fill canvas
 	// As smoothing is off the result will be pixelated
 	setSmooth(false);//Pixelated up-scaling
-	ctx.drawImage(canvas, nudgeX, nudgeY, pixelatedW, pixelatedH, dx, dy, w, h);
+	ctx.drawImage(
+	tempCanvas,
+	nudgeX,
+	nudgeY,
+	pixelatedW,
+	pixelatedH,
+	dx,
+	dy,
+	w,
+	h
+);
 	
 	// Clear out the working area
 	ctx.clearRect(0, 0, canvas.width, dy);
